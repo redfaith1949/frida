@@ -86,6 +86,8 @@ function hookTest6(){
 }
 
 
+
+
 function main(){
     Java.perform(function(){
         hookTest6();
