@@ -14,9 +14,60 @@ function replaceKILL() {
     }, "int", ["int", "int"]))
 }
 
+
+function hook_strcmp() {
+    var pt_strcmp = Module.findExportByName("libc.so", 'strcmp');
+    Interceptor.attach(pt_strcmp, {
+        onEnter: function (args) {
+            var str1 = args[0].readCString();
+            var str2 = args[1].readCString();
+            if (str2.indexOf("hh") !== -1) {
+                console.log("strcmp-->", str1, str2);
+                this.printStack = true;
+            }
+        }, onLeave: function (retval) {
+            if (this.printStack) { 
+                var stack = Thread.backtrace(this.context, Backtracer.ACCURATE)
+                    .map(DebugSymbol.fromAddress).join("\n");
+                console.log("Stack trace:\n" + stack);
+            }
+        }
+    })
+}
+
+function hook_dlsym() {
+    var dlsymAddr = Module.findExportByName("libdl.so", "dlsym");
+    Interceptor.attach(dlsymAddr, {
+        onEnter: function(args) {
+            this.args1 = args[1];
+        },
+        onLeave: function(retval) {
+            var module = Process.findModuleByAddress(retval);
+            if (module === null) return; 
+            console.log(this.args1.readCString(), module.name, retval, retval.sub(module.base));
+        }
+    });
+}
+
+function get_url() {
+    let ChallengeNinth = Java.use("com.zj.wuaipojie.ui.ChallengeNinth");
+    ChallengeNinth["updateUI"].implementation = function (list) {
+        let ret = this.updateUI(list);
+        // 获取List的大小
+        var size = list.size();
+        // 遍历并打印List中的每个ImageEntity对象
+        for (var i = 0; i < size; i++) {
+            var imageEntity = Java.cast(list.get(i), Java.use('com.zj.wuaipojie.entity.ImageEntity'));
+            console.log(imageEntity.name.value + imageEntity.cover.value);
+        }
+        return ret;
+    };
+}
+
+
 function main(){
     Java.perform(function(){
-        replaceKILL();
+        get_url();
     });
 }
 setImmediate(main);
