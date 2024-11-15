@@ -1,3 +1,5 @@
+// from https://xz.aliyun.com/t/16185?time__1311=GuD%3D7IqjOx%2FD78G7DyCm3i%3DeGQC3itbT4D
+
 function hook_android_dlopen_ext() {
     Interceptor.attach(Module.findExportByName(null, "android_dlopen_ext"),
         {
